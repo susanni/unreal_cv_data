@@ -68,26 +68,26 @@ private:
  * https://github.com/unrealcv/unrealcv/blob/master/Source/UnrealCV/Private/GTCaptureComponent.cpp#L228
  * https://github.com/TimmHess/UnrealImageCapture/blob/master/CaptureToDisk/Source/CaptureToDisk/Private/CaptureManager.cpp#L225
  */
-class Image2Png2DiskAsyncTask : public FNonAbandonableTask {
-public:
-	/**
-	 * Constructs async task.
-	 * @param SaveImageActor Entire instance to access capture component and render target.
-	 * @param FileName Name to save image to.
-	 * @param FilePath Path to directory of where image should be save.
-	 */
-	Image2Png2DiskAsyncTask(ASaveImageActor* SaveImageActor, const FString& FileName, const FString& FilePath = "/home/swarm/Downloads/Images/");
-	~Image2Png2DiskAsyncTask(){}
+// class Image2Png2DiskAsyncTask : public FNonAbandonableTask {
+// public:
+// 	/**
+// 	 * Constructs async task.
+// 	 * @param SaveImageActor Entire instance to access capture component and render target.
+// 	 * @param FileName Name to save image to.
+// 	 * @param FilePath Path to directory of where image should be save.
+// 	 */
+// 	Image2Png2DiskAsyncTask(ASaveImageActor* SaveImageActor, const FString& FileName, const FString& FilePath = "/home/swarm/Downloads/Images/");
+// 	~Image2Png2DiskAsyncTask(){}
 
-	// Required by UE4!
-    FORCEINLINE TStatId GetStatId() const{
-        RETURN_QUICK_DECLARE_CYCLE_STAT(AsyncSaveImageToDiskTask, STATGROUP_ThreadPoolAsyncTasks);
-    }
+// 	// Required by UE4!
+//     FORCEINLINE TStatId GetStatId() const{
+//         RETURN_QUICK_DECLARE_CYCLE_STAT(AsyncSaveImageToDiskTask, STATGROUP_ThreadPoolAsyncTasks);
+//     }
 
-	// Executes save PNG color image to disk task.
-	void DoWork();
+// 	// Executes save PNG color image to disk task.
+// 	void DoWork();
 
-private:
-	ASaveImageActor* SaveImageActor_;  // Used to access capture component and render target.
-	FString EntireFilePath_;  // Path to save image including image name.
-};
+// private:
+// 	ASaveImageActor* SaveImageActor_;  // Used to access capture component and render target.
+// 	FString EntireFilePath_;  // Path to save image including image name.
+// };

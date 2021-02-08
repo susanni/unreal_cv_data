@@ -110,29 +110,29 @@ TArray<uint8> ASaveImageActor::Image2Png(const TArray<FColor>& Image, int32 Widt
 // }
 
 
-Image2Png2DiskAsyncTask::Image2Png2DiskAsyncTask(ASaveImageActor* SaveImageActor, const FString& FileName, const FString& FilePath) {
-	SaveImageActor_ = SaveImageActor;
-	EntireFilePath_ = FilePath + FileName;
-}
+// Image2Png2DiskAsyncTask::Image2Png2DiskAsyncTask(ASaveImageActor* SaveImageActor, const FString& FileName, const FString& FilePath) {
+// 	SaveImageActor_ = SaveImageActor;
+// 	EntireFilePath_ = FilePath + FileName;
+// }
 
-void Image2Png2DiskAsyncTask::DoWork() {
-	int32 Width = SaveImageActor_->TextureTarget->SizeX;
-	int32 Height = SaveImageActor_->TextureTarget->SizeY;
+// void Image2Png2DiskAsyncTask::DoWork() {
+// 	int32 Width = SaveImageActor_->TextureTarget->SizeX;
+// 	int32 Height = SaveImageActor_->TextureTarget->SizeY;
 
-	// SaveImageActor_->CaptureComponent->CaptureScene();  // Should not be used if bCaptureEveryFrame enabled.
+// 	// SaveImageActor_->CaptureComponent->CaptureScene();  // Should not be used if bCaptureEveryFrame enabled.
 
-	TArray<FColor> Image;
-	Image.AddZeroed(Width * Height);
+// 	TArray<FColor> Image;
+// 	Image.AddZeroed(Width * Height);
 	
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("%s"), *EntireFilePath_));
+// 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("%s"), *EntireFilePath_));
 
-	FReadSurfaceDataFlags ReadSurfaceDataFlags;
-	ReadSurfaceDataFlags.SetLinearToGamma(false);
+// 	FReadSurfaceDataFlags ReadSurfaceDataFlags;
+// 	ReadSurfaceDataFlags.SetLinearToGamma(false);
 
-	if (SaveImageActor_->TextureTarget->GameThread_GetRenderTargetResource()->ReadPixels(Image, ReadSurfaceDataFlags)) {
-		TArray<uint8> ImgData = SaveImageActor_->Image2Png(Image, Width, Height);
-		FFileHelper::SaveArrayToFile(ImgData, *EntireFilePath_);
-	} else {
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("FAILED TO READ PIXELS ON TEXTURE TARGET.")));	
-	}
-}
+// 	if (SaveImageActor_->TextureTarget->GameThread_GetRenderTargetResource()->ReadPixels(Image, ReadSurfaceDataFlags)) {
+// 		TArray<uint8> ImgData = SaveImageActor_->Image2Png(Image, Width, Height);
+// 		FFileHelper::SaveArrayToFile(ImgData, *EntireFilePath_);
+// 	} else {
+// 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("FAILED TO READ PIXELS ON TEXTURE TARGET.")));	
+// 	}
+// }

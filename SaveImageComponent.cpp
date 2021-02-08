@@ -5,6 +5,7 @@
 
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
+#include "RHICommandList.h"
 
 // Sets default values for this component's properties.
 USaveImageComponent::USaveImageComponent()
@@ -40,6 +41,8 @@ void USaveImageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	if (ticks_%30 == 0) {
 		if (DisableSaving) return;
 		SaveImage();
+		// Start an async task to save color image to disk so the game thread is not blocked (which drops the FPS).
+		// (new FAutoDeleteAsyncTask<Image2Png2DiskAsyncTask>(this, "color_" + FString::FromInt(ticks_) + ".png"))->StartBackgroundTask();
 	}
 }
 
@@ -74,4 +77,64 @@ TArray<uint8> USaveImageComponent::Image2Png(const TArray<FColor>& Image, int32 
 	TArray<uint8> ImgData;  // avoiding error: no known conversion from 'const TArray64<uint8>' (aka 'const TArray<unsigned char, TSizedDefaultAllocator<64> >') to 'std::initializer_list<unsigned char>' for 1st argument
 	ImgData = ImageWrapper->GetCompressed();
 	return ImgData;
+}
+
+bool USaveImageComponent::ReadPixels(TArray<FColor>& OutImageData, FReadSurfaceDataFlags InFlags, FTextureRenderTargetResource* Resource) {
+	// Read the render target surface data back.
+	struct FReadSurfaceContext {
+		FRenderTarget* SrcRenderTarget;
+		TArray<FColor>* OutData;
+		FIntRect Rect;
+		FReadSurfaceDataFlags Flags;
+	};
+
+	OutImageData.Reset();
+
+	FReadSurfaceContext Context =
+	{
+		Resource,
+		&OutImageData,
+		// FIntRect(0, 0, RenderResource->GetSizeXY().X, RenderResource->GetSizeXY().Y),
+		FIntRect(0, 0, TextureTarget->SizeX, TextureTarget->SizeY),
+		// InFlags
+		FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)
+	};
+
+	// ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)(
+	// 	[Context](FRHICommandListImmediate& RHICmdList)
+	// 	{
+	// 		RHICmdList.ReadSurfaceData(
+	// 			Context.SrcRenderTarget->GetRenderTargetTexture(),
+	// 			Context.Rect,
+	// 			*Context.OutData,
+	// 			Context.Flags
+	// 		);
+	// 	});
+	return OutImageData.Num() > 0;
+}
+
+
+Image2Png2DiskAsyncTask::Image2Png2DiskAsyncTask(USaveImageComponent* SaveImageComp, const FString& FileName, const FString& FilePath) {
+	SaveImageComp_ = SaveImageComp;
+	EntireFilePath_ = FilePath + FileName;
+}
+
+void Image2Png2DiskAsyncTask::DoWork() {
+	int32 Width = SaveImageComp_->TextureTarget->SizeX;
+	int32 Height = SaveImageComp_->TextureTarget->SizeY;
+
+	TArray<FColor> Image;
+	Image.AddZeroed(Width * Height);
+	
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("%s"), *EntireFilePath_));
+
+	FReadSurfaceDataFlags ReadSurfaceDataFlags;
+	ReadSurfaceDataFlags.SetLinearToGamma(false);
+
+	if (SaveImageComp_->ReadPixels(Image, ReadSurfaceDataFlags, SaveImageComp_->TextureTarget->GameThread_GetRenderTargetResource())) {
+		TArray<uint8> ImgData = SaveImageComp_->Image2Png(Image, Width, Height);
+		FFileHelper::SaveArrayToFile(ImgData, *EntireFilePath_);
+	} else {
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("FAILED TO READ PIXELS ON TEXTURE TARGET.")));	
+	}
 }

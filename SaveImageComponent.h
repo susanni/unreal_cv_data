@@ -48,9 +48,49 @@ public:
 	 */
 	void SaveImage(const FString& FilePath = "/home/swarm/Downloads/Images/", const FString& ColorName = "color_", const FString& DepthName = "depth_");
 
+	/**
+	 * Replacing RenderTarget::ReadPixels() because FlushRenderingCommands() has to be run
+	 * in the game thread and blocks it, which causes FPS to drop.
+	 * References:
+	 * https://michaeljcole.github.io/wiki.unrealengine.com/Render_Target_Lookup/
+	 * https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Engine/Private/UnrealClient.cpp#L49
+	 */
+	bool ReadPixels(TArray<FColor>& OutImageData, FReadSurfaceDataFlags InFlags, FTextureRenderTargetResource* Resource);
+
 	UPROPERTY(EditAnywhere) UTextureRenderTarget2D* TextureTarget;
 	UPROPERTY(EditAnywhere) bool DisableSaving;  // If true, don't save images to disk.
 
 private:
 	int64 ticks_;  // Count of number of ticks that have passed since game started.
+};
+
+
+/**
+ * Task to asynchronously save a PNG color image to disk such that ReadPixels doesn't block the game thread.
+ * References:
+ * https://github.com/unrealcv/unrealcv/blob/master/Source/UnrealCV/Private/GTCaptureComponent.cpp#L228
+ * https://github.com/TimmHess/UnrealImageCapture/blob/master/CaptureToDisk/Source/CaptureToDisk/Private/CaptureManager.cpp#L225
+ */
+class Image2Png2DiskAsyncTask : public FNonAbandonableTask {
+public:
+	/**
+	 * Constructs async task.
+	 * @param SaveImageComp Entire instance to access capture component and render target.
+	 * @param FileName Name to save image to.
+	 * @param FilePath Path to directory of where image should be save.
+	 */
+	Image2Png2DiskAsyncTask(USaveImageComponent* SaveImageComp, const FString& FileName, const FString& FilePath = "/home/swarm/Downloads/Images/");
+	~Image2Png2DiskAsyncTask(){}
+
+	// Required by UE4!
+    FORCEINLINE TStatId GetStatId() const{
+        RETURN_QUICK_DECLARE_CYCLE_STAT(AsyncSaveImageToDiskTask, STATGROUP_ThreadPoolAsyncTasks);
+    }
+
+	// Executes save PNG color image to disk task.
+	void DoWork();
+
+private:
+	USaveImageComponent* SaveImageComp_;  // Used for access to the render target.
+	FString EntireFilePath_;  // Path to save image including image name.
 };
