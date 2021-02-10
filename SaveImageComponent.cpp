@@ -7,6 +7,7 @@
 #include "IImageWrapperModule.h"
 #include "RHICommandList.h"
 
+
 // Sets default values for this component's properties.
 USaveImageComponent::USaveImageComponent()
 {

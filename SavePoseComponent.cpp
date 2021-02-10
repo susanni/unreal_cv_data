@@ -21,7 +21,10 @@ void USavePoseComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	if (!DisableSaving) {
+		FString Heading = "Tick,POS_X,POS_Y,POS_Z,ROT_X,ROT_Y,ROT_Z,ROT_W\n";
+		FFileHelper::SaveStringToFile(*Heading, *(FilePath+FileName), FFileHelper::EEncodingOptions::AutoDetect, &IFileManager::Get(), EFileWrite::FILEWRITE_None);
+	}
 }
 
 
@@ -41,6 +44,11 @@ void USavePoseComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 }
 
 void USavePoseComponent::WritePoseToFile() {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("[SavePoseComponent] Pose: %s"), *(this->GetComponentTransform().ToHumanReadableString())));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("[SavePoseComponent] Pose: %s"), *(this->GetComponentTransform().ToHumanReadableString())));
+	FTransform Transform = this->GetComponentTransform();
+	FVector Trans = Transform.GetTranslation();
+	FQuat Rot = Transform.GetRotation();
+	FString Pose = FString::FromInt(ticks_) + "," + FString::SanitizeFloat(Trans.X) + "," + FString::SanitizeFloat(Trans.Y) + "," + FString::SanitizeFloat(Trans.Z)
+	             + "," + FString::SanitizeFloat(Rot.X) + "," + FString::SanitizeFloat(Rot.Y) + "," + FString::SanitizeFloat(Rot.Z) + "," + FString::SanitizeFloat(Rot.W) + "\n";
+	FFileHelper::SaveStringToFile(*Pose, *(FilePath+FileName), FFileHelper::EEncodingOptions::AutoDetect, &IFileManager::Get(), EFileWrite::FILEWRITE_Append);
 }
-

@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+
 #include "Containers/UnrealString.h"
 #include "Engine.h"  // Contains includes for almost all Unreal headers, i.e. USceneCaptureComponent2D.
+
 #include "SaveImageComponent.generated.h"
+
 
 /**
  * Utilities for SceneCaptureComponent2D to save color + depth images to disk.
@@ -55,7 +58,7 @@ public:
 	// bool ReadPixels(TArray<FColor>& OutImageData, FReadSurfaceDataFlags InFlags, FTextureRenderTargetResource* Resource);
 
 	UPROPERTY(EditAnywhere) UTextureRenderTarget2D* TextureTarget;
-	UPROPERTY(EditAnywhere) FString FilePath = "/home/swarm/Downloads/Images/";  // Absolute path to directoy where images should be saved.
+	UPROPERTY(EditAnywhere) FString FilePath = "/home/swarm/Downloads/Unreal_Saves/Images/";  // Absolute path to directoy where images should be saved.
 	UPROPERTY(EditAnywhere) FString FileNamePrefix;  // Prefix of image file name. i.e. for a color image, "color_".
 	UPROPERTY(EditAnywhere) int SavePerTick = 30;  // How often to save images. i.e. if SavePerTick = 3, images will be saved every 3 ticks.
 	UPROPERTY(EditAnywhere) bool DisableSaving;  // If true, don't save images to disk.
