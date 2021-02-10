@@ -24,8 +24,12 @@ void USaveImageComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	if (TextureTarget == nullptr) {
+		DisableSaving = true;
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("[SaveImageComponent] No target texture provided. Disabling saving.")));
+	}
 	if (DisableSaving) {
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("[SaveImageComponent] FYI: Image saving is disabled.")));
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("[SaveImageComponent] FYI: Image saving is disabled.")));
 	}
 }
 
@@ -38,7 +42,9 @@ void USaveImageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 	++ticks_;
 
-	if (ticks_%30 == 0) {
+	if (DisableSaving) return;
+
+	if (ticks_%SavePerTick == 0) {
 		SaveImage();
 		// Start an async task to save color image to disk so the game thread is not blocked (which drops the FPS).
 		// (new FAutoDeleteAsyncTask<Image2Png2DiskAsyncTask>(this, "color_" + FString::FromInt(ticks_) + ".png"))->StartBackgroundTask();
@@ -46,8 +52,6 @@ void USaveImageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 }
 
 void USaveImageComponent::SaveImage() {
-	if (DisableSaving) return;
-
 	int32 Width = TextureTarget->SizeX;
 	int32 Height = TextureTarget->SizeY;
 
