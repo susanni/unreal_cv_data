@@ -39,14 +39,13 @@ void USaveImageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	++ticks_;
 
 	if (ticks_%30 == 0) {
-		if (DisableSaving) return;
 		SaveImage();
 		// Start an async task to save color image to disk so the game thread is not blocked (which drops the FPS).
 		// (new FAutoDeleteAsyncTask<Image2Png2DiskAsyncTask>(this, "color_" + FString::FromInt(ticks_) + ".png"))->StartBackgroundTask();
 	}
 }
 
-void USaveImageComponent::SaveImage(const FString& FilePath, const FString& ColorName, const FString& DepthName) {
+void USaveImageComponent::SaveImage() {
 	if (DisableSaving) return;
 
 	int32 Width = TextureTarget->SizeX;
@@ -61,7 +60,7 @@ void USaveImageComponent::SaveImage(const FString& FilePath, const FString& Colo
 	TextureTarget->GameThread_GetRenderTargetResource()->ReadPixels(Image, ReadSurfaceDataFlags);
 
 	TArray<uint8> ImgData = Image2Png(Image, Width, Height);
-	FFileHelper::SaveArrayToFile(ImgData, *(FilePath + ColorName + FString::FromInt(ticks_) + ".png"));
+	FFileHelper::SaveArrayToFile(ImgData, *(FilePath + FileNamePrefix + FString::FromInt(ticks_) + ".png"));
 }
 
 TArray<uint8> USaveImageComponent::Image2Png(const TArray<FColor>& Image, int32 Width, int32 Height) {
@@ -79,62 +78,62 @@ TArray<uint8> USaveImageComponent::Image2Png(const TArray<FColor>& Image, int32 
 	return ImgData;
 }
 
-bool USaveImageComponent::ReadPixels(TArray<FColor>& OutImageData, FReadSurfaceDataFlags InFlags, FTextureRenderTargetResource* Resource) {
-	// Read the render target surface data back.
-	struct FReadSurfaceContext {
-		FRenderTarget* SrcRenderTarget;
-		TArray<FColor>* OutData;
-		FIntRect Rect;
-		FReadSurfaceDataFlags Flags;
-	};
+// bool USaveImageComponent::ReadPixels(TArray<FColor>& OutImageData, FReadSurfaceDataFlags InFlags, FTextureRenderTargetResource* Resource) {
+// 	// Read the render target surface data back.
+// 	struct FReadSurfaceContext {
+// 		FRenderTarget* SrcRenderTarget;
+// 		TArray<FColor>* OutData;
+// 		FIntRect Rect;
+// 		FReadSurfaceDataFlags Flags;
+// 	};
 
-	OutImageData.Reset();
+// 	OutImageData.Reset();
 
-	FReadSurfaceContext Context =
-	{
-		Resource,
-		&OutImageData,
-		// FIntRect(0, 0, RenderResource->GetSizeXY().X, RenderResource->GetSizeXY().Y),
-		FIntRect(0, 0, TextureTarget->SizeX, TextureTarget->SizeY),
-		// InFlags
-		FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)
-	};
+// 	FReadSurfaceContext Context =
+// 	{
+// 		Resource,
+// 		&OutImageData,
+// 		// FIntRect(0, 0, RenderResource->GetSizeXY().X, RenderResource->GetSizeXY().Y),
+// 		FIntRect(0, 0, TextureTarget->SizeX, TextureTarget->SizeY),
+// 		// InFlags
+// 		FReadSurfaceDataFlags(RCM_UNorm, CubeFace_MAX)
+// 	};
 
-	// ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)(
-	// 	[Context](FRHICommandListImmediate& RHICmdList)
-	// 	{
-	// 		RHICmdList.ReadSurfaceData(
-	// 			Context.SrcRenderTarget->GetRenderTargetTexture(),
-	// 			Context.Rect,
-	// 			*Context.OutData,
-	// 			Context.Flags
-	// 		);
-	// 	});
-	return OutImageData.Num() > 0;
-}
+// 	// ENQUEUE_RENDER_COMMAND(ReadSurfaceCommand)(
+// 	// 	[Context](FRHICommandListImmediate& RHICmdList)
+// 	// 	{
+// 	// 		RHICmdList.ReadSurfaceData(
+// 	// 			Context.SrcRenderTarget->GetRenderTargetTexture(),
+// 	// 			Context.Rect,
+// 	// 			*Context.OutData,
+// 	// 			Context.Flags
+// 	// 		);
+// 	// 	});
+// 	return OutImageData.Num() > 0;
+// }
 
 
-Image2Png2DiskAsyncTask::Image2Png2DiskAsyncTask(USaveImageComponent* SaveImageComp, const FString& FileName, const FString& FilePath) {
-	SaveImageComp_ = SaveImageComp;
-	EntireFilePath_ = FilePath + FileName;
-}
+// Image2Png2DiskAsyncTask::Image2Png2DiskAsyncTask(USaveImageComponent* SaveImageComp, const FString& FileName, const FString& FilePath) {
+// 	SaveImageComp_ = SaveImageComp;
+// 	EntireFilePath_ = FilePath + FileName;
+// }
 
-void Image2Png2DiskAsyncTask::DoWork() {
-	int32 Width = SaveImageComp_->TextureTarget->SizeX;
-	int32 Height = SaveImageComp_->TextureTarget->SizeY;
+// void Image2Png2DiskAsyncTask::DoWork() {
+// 	int32 Width = SaveImageComp_->TextureTarget->SizeX;
+// 	int32 Height = SaveImageComp_->TextureTarget->SizeY;
 
-	TArray<FColor> Image;
-	Image.AddZeroed(Width * Height);
+// 	TArray<FColor> Image;
+// 	Image.AddZeroed(Width * Height);
 	
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("%s"), *EntireFilePath_));
+// 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("%s"), *EntireFilePath_));
 
-	FReadSurfaceDataFlags ReadSurfaceDataFlags;
-	ReadSurfaceDataFlags.SetLinearToGamma(false);
+// 	FReadSurfaceDataFlags ReadSurfaceDataFlags;
+// 	ReadSurfaceDataFlags.SetLinearToGamma(false);
 
-	if (SaveImageComp_->ReadPixels(Image, ReadSurfaceDataFlags, SaveImageComp_->TextureTarget->GameThread_GetRenderTargetResource())) {
-		TArray<uint8> ImgData = SaveImageComp_->Image2Png(Image, Width, Height);
-		FFileHelper::SaveArrayToFile(ImgData, *EntireFilePath_);
-	} else {
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("FAILED TO READ PIXELS ON TEXTURE TARGET.")));	
-	}
-}
+// 	if (SaveImageComp_->ReadPixels(Image, ReadSurfaceDataFlags, SaveImageComp_->TextureTarget->GameThread_GetRenderTargetResource())) {
+// 		TArray<uint8> ImgData = SaveImageComp_->Image2Png(Image, Width, Height);
+// 		FFileHelper::SaveArrayToFile(ImgData, *EntireFilePath_);
+// 	} else {
+// 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("FAILED TO READ PIXELS ON TEXTURE TARGET.")));	
+// 	}
+// }
