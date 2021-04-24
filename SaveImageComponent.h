@@ -58,7 +58,7 @@ public:
 	// bool ReadPixels(TArray<FColor>& OutImageData, FReadSurfaceDataFlags InFlags, FTextureRenderTargetResource* Resource);
 
 	UPROPERTY(EditAnywhere) UTextureRenderTarget2D* TextureTarget;
-	UPROPERTY(EditAnywhere) FString FilePath = "/home/swarm/Downloads/Unreal_Saves/Images/";  // Absolute path to directoy where images should be saved.
+	UPROPERTY(EditAnywhere) FString FilePath = "/home/swarm/unreal_ssd/Unreal_Saves/Images/";  // Absolute path to directoy where images should be saved.
 	UPROPERTY(EditAnywhere) FString FileNamePrefix;  // Prefix of image file name. i.e. for a color image, "color_".
 	UPROPERTY(EditAnywhere) int SavePerTick = 30;  // How often to save images. i.e. if SavePerTick = 3, images will be saved every 3 ticks.
 	UPROPERTY(EditAnywhere) bool DisableSaving;  // If true, don't save images to disk.

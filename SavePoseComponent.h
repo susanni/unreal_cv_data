@@ -30,8 +30,8 @@ public:
 
 	void WritePoseToFile();
 
-	UPROPERTY(EditAnywhere) FString FilePath = "/home/swarm/Downloads/Unreal_Saves/Poses/";  // Absolute path to directoy where pose file is located/should be saved.
-	UPROPERTY(EditAnywhere) FString FileName = "pose.txt";  // Name of pose file.
+	UPROPERTY(EditAnywhere) FString FilePath = "/home/swarm/unreal_ssd/Unreal_Saves/Poses/";  // Absolute path to directoy where pose file is located/should be saved.
+	UPROPERTY(EditAnywhere) FString FileName = "";  // Name of pose file. Defaults to the root actor's ID name.
 	UPROPERTY(EditAnywhere) int SavePerTick = 30;  // How often to save poses should be written. i.e. if SavePerTick = 3, poses will be written to the file on disk every 3 ticks.
 	UPROPERTY(EditAnywhere) bool DisableSaving;  // If true, don't write poses to disk.
 
