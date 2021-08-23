@@ -55,16 +55,32 @@ void USaveImageComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 void USaveImageComponent::SaveImage() {
 	int32 Width = TextureTarget->SizeX;
 	int32 Height = TextureTarget->SizeY;
-
-	TArray<FColor> Image;
-	Image.AddZeroed(Width * Height);
 	
 	FReadSurfaceDataFlags ReadSurfaceDataFlags;
-	ReadSurfaceDataFlags.SetLinearToGamma(false); // This is super important to disable this!
+	// ReadSurfaceDataFlags.SetLinearToGamma(false); // This is super important to disable this!
 	// Instead of using this flag, we will set the gamma to the correct value directly
-	TextureTarget->GameThread_GetRenderTargetResource()->ReadPixels(Image, ReadSurfaceDataFlags);
 
-	TArray<uint8> ImgData = Image2Png(Image, Width, Height);
+	static IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
+	static TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
+
+	if (TextureTarget->RenderTargetFormat == ETextureRenderTargetFormat::RTF_RGBA8) {
+		TArray<FColor> Image;
+		Image.AddZeroed(Width * Height);
+		TextureTarget->GameThread_GetRenderTargetResource()->ReadPixels(Image, ReadSurfaceDataFlags);
+		ImageWrapper->SetRaw(Image.GetData(), Image.Num()*sizeof(FColor), Width, Height, ERGBFormat::BGRA, 8);
+	} else if (TextureTarget->RenderTargetFormat == ETextureRenderTargetFormat::RTF_RGBA16f) {
+		TArray<FFloat16Color> Image16;
+		Image16.AddZeroed(Width * Height);
+		TextureTarget->GameThread_GetRenderTargetResource()->ReadFloat16Pixels(Image16);
+		ImageWrapper->SetRaw(Image16.GetData(), Image16.Num()*sizeof(FFloat16Color), Width, Height, ERGBFormat::BGRA, 16);
+	} else {
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, FString::Printf(TEXT("[SaveImageComponent] Tick %d: Please use render target format RTF_RGBA8 or RTF_RGBA16f. Not saving image."), ticks_));
+		return;
+	}
+	TArray<uint8> ImgData;
+	ImgData = ImageWrapper->GetCompressed();
+
+	// TArray<uint8> ImgData = Image2Png(Image, Width, Height);
 	FFileHelper::SaveArrayToFile(ImgData, *(FilePath + FileNamePrefix + FString::FromInt(ticks_) + ".png"));
 }
 

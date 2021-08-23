@@ -22,6 +22,9 @@ void USavePoseComponent::BeginPlay()
 
 	// ...
 	if (!DisableSaving) {
+		if (FileName.IsEmpty()) {
+			FileName = this->GetAttachmentRootActor()->GetName() + ".txt";
+		}
 		FString Heading = "Tick,POS_X,POS_Y,POS_Z,ROT_X,ROT_Y,ROT_Z,ROT_W\n";
 		FFileHelper::SaveStringToFile(*Heading, *(FilePath+FileName), FFileHelper::EEncodingOptions::AutoDetect, &IFileManager::Get(), EFileWrite::FILEWRITE_None);
 	}
